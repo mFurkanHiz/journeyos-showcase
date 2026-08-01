@@ -7,16 +7,24 @@ updates:
   - package-ecosystem: nuget
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     open-pull-requests-limit: 5
     groups:
       dotnet:
         patterns: ["*"]
+    ignore:
+      # Microsoft.OpenApi is pinned only to lift the transitive version above
+      # GHSA-v5pm-xwqc-g5wc — its major has to track whatever Microsoft.AspNetCore.OpenApi
+      # generates against. 3.x makes IOpenApiMediaType.Example read-only while the
+      # ASP.NET Core 10 source generator still assigns it, so the major cannot move
+      # until that package does. Patches and minors still come through.
+      - dependency-name: Microsoft.OpenApi
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: npm
     directory: /frontend
     schedule:
-      interval: weekly
+      interval: monthly
     open-pull-requests-limit: 5
     groups:
       frontend:
