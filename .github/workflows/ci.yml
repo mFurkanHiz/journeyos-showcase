@@ -26,7 +26,7 @@ jobs:
           FILE=$(find ./coverage -name 'coverage.cobertura.xml' | head -1)
           echo "Coverage report: $FILE"
           grep -o 'line-rate="[0-9.]*"' "$FILE" | head -1
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: ./coverage
