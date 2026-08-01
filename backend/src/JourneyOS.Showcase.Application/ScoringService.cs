@@ -90,25 +90,36 @@ public sealed class ScoringService
         return result;
     }
 
+    /// <summary>A comparative sentence against the quickest candidate in the set.
+    /// Formatted with the invariant culture on purpose: the API speaks one English
+    /// contract, so "2.5h" must not become "2,5h" on a machine with another locale.</summary>
     private static string Explain(OptimizationProfile profile, Itinerary chosen, Itinerary fastest)
     {
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
         if (chosen.Id == fastest.Id)
             return profile switch
             {
                 OptimizationProfile.Fastest => "The shortest door-to-door option in this set.",
-                _ => "This option leads its profile AND is also the fastest in the set.",
+                _ => "This option leads its profile AND is also the quickest in the set.",
             };
-        var extraH = Math.Round((chosen.TotalDurationMinutes - fastest.TotalDurationMinutes) / 60.0, 1);
-        var parts = new List<string> { $"{extraH}h longer than the fastest option" };
+
+        var extraMin = chosen.TotalDurationMinutes - fastest.TotalDurationMinutes;
+        // "0h longer" reads like a bug; under half an hour is noise on a two-day trip.
+        var lead = extraMin < 30
+            ? "About as quick as the fastest option"
+            : $"{(extraMin / 60.0).ToString("0.#", inv)}h longer than the fastest option";
+
+        var gains = new List<string>();
         var fewerTransfers = fastest.TransferCount - chosen.TransferCount;
-        if (fewerTransfers > 0) parts.Add($"{fewerTransfers} fewer transfer{(fewerTransfers > 1 ? "s" : "")}");
+        if (fewerTransfers > 0) gains.Add($"{fewerTransfers} fewer transfer{(fewerTransfers > 1 ? "s" : "")}");
         if (chosen.TotalPrice.Amount < fastest.TotalPrice.Amount)
-            parts.Add($"saves {Math.Round(fastest.TotalPrice.Amount - chosen.TotalPrice.Amount)} {chosen.TotalPrice.Currency}");
-        if (chosen.OvernightWaits < fastest.OvernightWaits)
-            parts.Add("no overnight airport wait");
-        if (chosen.RiskScore < fastest.RiskScore)
-            parts.Add("safer connections");
-        return string.Join(", but ", new[] { parts[0], string.Join(" and ", parts.Skip(1)) }
-            .Where(s => s.Length > 0)) + ".";
+            gains.Add($"saves {Math.Round(fastest.TotalPrice.Amount - chosen.TotalPrice.Amount).ToString("0", inv)} {chosen.TotalPrice.Currency}");
+        if (chosen.OvernightWaits < fastest.OvernightWaits) gains.Add("no overnight airport wait");
+        if (chosen.RiskScore < fastest.RiskScore) gains.Add("safer connections");
+        if (chosen.WalkingMinutes < fastest.WalkingMinutes - 30) gains.Add("less walking");
+
+        return gains.Count == 0
+            ? $"{lead}, with no clear advantage — it wins on this profile's weighting alone."
+            : $"{lead}, but {string.Join(" and ", gains)}.";
     }
 }

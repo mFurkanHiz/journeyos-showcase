@@ -6,12 +6,20 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
+    <!-- Pinned above the 2.0.0 that Microsoft.AspNetCore.OpenApi pulls in transitively:
+         that version carries GHSA-v5pm-xwqc-g5wc. A build with zero vulnerability
+         warnings is part of the deliverable, so the transitive pin is explicit. -->
+    <PackageReference Include="Microsoft.OpenApi" Version="2.11.0" />
   </ItemGroup>
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Audit transitive packages too, and fail the build rather than warn: a known-vulnerable
+         dependency should stop CI, not scroll past in the log. -->
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <WarningsAsErrors>$(WarningsAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsAsErrors>
   </PropertyGroup>
 
 </Project>

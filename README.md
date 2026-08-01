@@ -11,6 +11,11 @@ walks, rides, flights, trains, waits and nights, composed and scored end to end.
 > rules are invented and reproducible, never live. It exists to show the engineering,
 > not to book travel.
 
+![Search and the three scored profile cards, with the Balanced score breakdown](docs/images/01-profiles.png)
+
+*One click composes Beykoz → Machu Picchu into scored alternatives. The breakdown shows
+exactly why Balanced chose this itinerary — no opaque ranking.*
+
 ---
 
 ## Why this isn't a flight-search app
@@ -138,10 +143,19 @@ Full script: [`docs/demo.md`](docs/demo.md).
 
 Eight metrics (price, duration, transfers, risk, waiting, overnight, comfort, walking)
 are min-max normalized across the candidates, then weighted per profile (each profile's
-weights sum to 1). Lowest weighted total wins and carries its breakdown, e.g. Balanced:
-`price 0.10 + duration 0.00 + risk 0.03 + waiting 0.02 + … = total`, plus a sentence like
-*"2.5h longer than the fastest option, but safer connections and no overnight airport
-wait."* Details + worked example: [`docs/scoring.md`](docs/scoring.md).
+weights sum to 1). Lowest weighted total wins and carries its breakdown — the real
+output for the canonical demo:
+
+```
+Balanced   price 0.39×0.25=0.097 · duration 0.00×0.25=0.000 · risk 0.27×0.12=0.032
+           waiting 0.24×0.08=0.019 · transfers/overnight/comfort/walking 0.000
+           total 0.149
+           "About as quick as the fastest option, but saves 73 USD and safer connections."
+
+Cheapest   "2.5h longer than the fastest option, but saves 230 USD and safer connections."
+```
+
+Details + the weight table: [`docs/scoring.md`](docs/scoring.md).
 
 ## What is NOT real
 
@@ -152,9 +166,22 @@ warning). Warnings are demonstration rules, not travel advice. See
 
 ## Screenshots
 
-<!-- screenshot: search + three profile cards -->
-<!-- screenshot: timeline with tz/date badges -->
-<!-- screenshot: score breakdown + comparison table -->
+All four are produced by `node tools/screenshots.mjs` against a running stack — the
+demo is deterministic, so the images can never drift from what the code renders.
+
+**The composed timeline** — every buffer, wait and hop, with both endpoint clocks and
+explicit timezone / date-change markers:
+
+![Timeline with dual local clocks and timezone and date-change badges](docs/images/02-timeline.png)
+
+**The warning engine** — rules derived from the composed chain (short connection,
+overnight airport wait, transit and health notes), every row flagged as demo data:
+
+![Warnings, each flagged as demo data](docs/images/03-warnings.png)
+
+**Side-by-side comparison** across the three profiles:
+
+![Side-by-side profile comparison table](docs/images/04-comparison.png)
 
 ## Tests & CI
 
@@ -165,6 +192,9 @@ backend build + tests + coverage, frontend lint + build, and a Docker image buil
 See [`docs/testing.md`](docs/testing.md).
 
 ## Documentation
+
+**Start here:** [engineering-decisions](docs/engineering-decisions.md) — the trade-offs,
+the rejected alternatives and what would make me revisit each one.
 
 [architecture](docs/architecture.md) · [provider-adapters](docs/provider-adapters.md) ·
 [canonical-model](docs/canonical-model.md) · [itinerary-composition](docs/itinerary-composition.md) ·

@@ -1,0 +1,28 @@
+version: 2
+
+# Keeps the three ecosystems this repo actually uses current, and — because CI treats
+# NuGet audit warnings as errors — a vulnerable transitive package shows up as a failing
+# check with an open PR that fixes it, rather than as a warning nobody reads.
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      dotnet:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      frontend:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

@@ -25,6 +25,11 @@ builder.Services.AddSingleton<WarningEngine>();
 builder.Services.AddSingleton<TimelineBuilder>();
 builder.Services.AddSingleton<TripService>();
 
+// Enums travel as names, not ordinals: "InternationalFlight" is self-describing in
+// the JSON and the OpenAPI schema, and stays stable if the enum is ever reordered.
+builder.Services.ConfigureHttpJsonOptions(o =>
+    o.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+
 builder.Services.AddOpenApi();
 builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
     .WithOrigins("http://localhost:5173", "http://localhost:4173")   // Vite dev/preview only
