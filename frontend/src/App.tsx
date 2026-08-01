@@ -142,6 +142,17 @@ export default function App() {
         </div>
       )}
 
+      {trip && trip.relaxedPreferences.length > 0 && (
+        <div className="card state relaxed">
+          <strong>These results do not fully match what you asked for.</strong>
+          <ul>
+            {trip.relaxedPreferences.map((r) => (
+              <li key={r.preference}><code>{r.preference}</code> — {r.reason}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {trip && (
         <>
           <section className="cards">

@@ -4,7 +4,7 @@
 walks, rides, flights, trains, waits and nights, composed and scored end to end.**
 
 ![CI](https://github.com/mFurkanHiz/journeyos-showcase/actions/workflows/ci.yml/badge.svg)
-&nbsp;·&nbsp; .NET 10 · React + Vite · 30 tests (unit + integration + e2e)
+&nbsp;·&nbsp; .NET 10 · React + Vite · 32 tests (unit + integration + e2e)
 
 
 > **Everything in this demo is deterministic mock data** — prices, schedules and entry
@@ -46,7 +46,7 @@ copy the private system.
 | Live free-data adapters (geocoding, roads, weather, advisories, airports, aircraft, FX) | 🔒 | ✅ |
 | Config-gated paid seams (flights / hotels / fares / flight-status) | 🔒 | ✅ |
 | Persistence (EF Core, migrations), auth, admin, i18n-as-data, payments/loyalty | 🔒 | ✅ |
-| Test suite | 30 | 355 |
+| Test suite | 32 | 355 |
 
 ## Architecture
 
@@ -77,6 +77,10 @@ scorer, a dual-clock timeline builder and a rule-based warning engine. Full deta
   [`docs/timeline.md`](docs/timeline.md)
 - **Deterministic mocking.** No `Random`, no wall clock — fares jitter through a stable
   hash so the whole suite is reproducible. [`docs/testing.md`](docs/testing.md)
+- **Preferences that degrade out loud.** "Max 1 transfer" to Machu Picchu is impossible.
+  Returning nothing is useless; quietly returning 7-transfer routes is a lie. The engine
+  relaxes the constraint, names it in the response, and the UI says so.
+  [`docs/itinerary-composition.md`](docs/itinerary-composition.md)
 
 ## Feature matrix
 
@@ -186,7 +190,7 @@ overnight airport wait, transit and health notes), every row flagged as demo dat
 
 ## Tests & CI
 
-30 tests: unit (Haversine, normalization, composer continuity/determinism/fail-soft,
+32 tests: unit (Haversine, normalization, composer continuity/determinism/fail-soft,
 timezones, scoring, warnings), WebApplicationFactory integration (all endpoints, error
 codes), and an end-to-end canonical-demo test. CI (`.github/workflows/ci.yml`) runs
 backend build + tests + coverage, frontend lint + build, and a Docker image build.

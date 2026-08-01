@@ -4,6 +4,12 @@ namespace JourneyOS.Showcase.Application;
 
 public sealed class NoRouteFoundException(string reason) : Exception(reason);
 
+/// <summary>The composed candidate set plus every preference that had to be relaxed
+/// to produce it. Callers surface the relaxations; see docs/itinerary-composition.md.</summary>
+public sealed record Composition(
+    IReadOnlyList<Itinerary> Candidates,
+    IReadOnlyList<RelaxedPreference> Relaxed);
+
 /// <summary>Builds full door-to-door candidate itineraries by walking the provider
 /// seams: place → airport access → flight path (≤4 legs, searched over the flight
 /// network) → destination ground approach → overnight stays → the destination
@@ -42,7 +48,7 @@ public sealed class ItineraryComposer
         _ground = ground; _flights = flights; _hotels = hotels; _activities = activities; _fx = fx;
     }
 
-    public async Task<IReadOnlyList<Itinerary>> ComposeAsync(TripSearchRequest req, CancellationToken ct = default)
+    public async Task<Composition> ComposeAsync(TripSearchRequest req, CancellationToken ct = default)
     {
         if (!_fx.Supports(req.Currency)) throw new NoRouteFoundException($"unsupported_currency:{req.Currency}");
 
@@ -57,11 +63,15 @@ public sealed class ItineraryComposer
             throw new NoRouteFoundException("no_gateway_airport");
         var destGateway = destGateways[0];
 
+        // The ground approach depends only on the arrival airport and the destination,
+        // so it is discovered once — not re-walked for every origin gateway.
+        var groundApproaches = await FindGroundApproachesAsync(destGateway, destination, ct);
+
         var candidates = new List<Itinerary>();
         foreach (var og in originGateways)
         {
+            if (candidates.Count >= MaxCandidates) break;
             var paths = await FindFlightPathsAsync(og, destGateway, ct);
-            var groundApproaches = await FindGroundApproachesAsync(destGateway, destination, ct);
             IReadOnlyList<TransportOffer> accessOptions;
             try
             {
@@ -70,28 +80,33 @@ public sealed class ItineraryComposer
             }
             catch { continue; }   // fail-soft: this gateway's access provider is down
 
-            foreach (var path in paths)
-                foreach (var approach in groundApproaches)
-                    foreach (var access in accessOptions)
-                        foreach (var hotelOvernights in new[] { true, false })
-                        {
-                            if (candidates.Count >= MaxCandidates) break;
-                            try
-                            {
-                                var built = await BuildCandidateAsync(
-                                    req, origin, destination, access, path, approach, hotelOvernights, ct);
-                                if (built is not null) candidates.Add(built);
-                            }
-                            catch (NoRouteFoundException) { /* this combination has no schedule — skip */ }
-                            catch { /* a provider failed mid-build — skip the candidate, keep searching */ }
-                        }
+            // The candidate space, written as the cross-product it actually is.
+            var combinations =
+                from path in paths
+                from approach in groundApproaches
+                from access in accessOptions
+                from hotelOvernights in new[] { true, false }
+                select (path, approach, access, hotelOvernights);
+
+            foreach (var (path, approach, access, hotelOvernights) in combinations)
+            {
+                if (candidates.Count >= MaxCandidates) break;
+                try
+                {
+                    var built = await BuildCandidateAsync(
+                        req, origin, destination, access, path, approach, hotelOvernights, ct);
+                    if (built is not null) candidates.Add(built);
+                }
+                catch (NoRouteFoundException) { /* this combination has no schedule — skip */ }
+                catch { /* a provider failed mid-build — skip the candidate, keep searching */ }
+            }
         }
 
         candidates = Dedupe(candidates);
-        candidates = ApplyHardPreferences(req, candidates);
         if (candidates.Count == 0)
             throw new NoRouteFoundException($"no_route:{req.Origin}->{req.Destination}");
-        return candidates;
+        var (kept, relaxed) = ApplyHardPreferences(req, candidates);
+        return new Composition(kept, relaxed);
     }
 
     /// <summary>06:00 local at the origin on the requested date — a civilised start.</summary>
@@ -312,7 +327,6 @@ public sealed class ItineraryComposer
         return null;
     }
 
-    private static DateTime Max(DateTime a, DateTime b) => a > b ? a : b;
     private static int LocalHour(TransportNode node, DateTime utc) => node.Location.ToLocal(utc).Hour;
 
     /// <summary>The next local <see cref="GateFirstEntryHour"/> at or after the given
@@ -501,24 +515,35 @@ public sealed class ItineraryComposer
             .Select(g => g.First())
             .ToList();
 
-    private List<Itinerary> ApplyHardPreferences(TripSearchRequest req, List<Itinerary> candidates)
+    /// <summary>Applies each ticked preference as a filter, but never down to zero:
+    /// a trip that cannot be planned is worse than a trip that misses a preference.
+    /// Every preference that had to be dropped is RETURNED, so the caller can tell the
+    /// traveller instead of quietly handing back results that violate their request.</summary>
+    private static (List<Itinerary> Kept, List<RelaxedPreference> Relaxed) ApplyHardPreferences(
+        TripSearchRequest req, List<Itinerary> candidates)
     {
         var result = candidates;
-        if (req.MaxTransfers is { } cap)
+        var relaxed = new List<RelaxedPreference>();
+
+        void Apply(bool requested, string name, Func<Itinerary, bool> keep, string reason)
         {
-            var filtered = result.Where(i => i.TransferCount <= cap).ToList();
+            if (!requested) return;
+            var filtered = result.Where(keep).ToList();
             if (filtered.Count > 0) result = filtered;
+            else relaxed.Add(new RelaxedPreference(name, reason));
         }
-        if (req.AvoidOvernightLayovers)
-        {
-            var filtered = result.Where(i => i.OvernightWaits == 0).ToList();
-            if (filtered.Count > 0) result = filtered;
-        }
-        if (req.ReducedWalking)
-        {
-            var filtered = result.Where(i => i.WalkingMinutes <= 30).ToList();
-            if (filtered.Count > 0) result = filtered;
-        }
-        return result;
+
+        Apply(req.MaxTransfers is not null, "maxTransfers",
+            i => i.TransferCount <= req.MaxTransfers!.Value,
+            $"No route to this destination manages it in {req.MaxTransfers} " +
+            $"transfer{(req.MaxTransfers == 1 ? "" : "s")} or fewer.");
+        Apply(req.AvoidOvernightLayovers, "avoidOvernightLayovers",
+            i => i.OvernightWaits == 0,
+            "Every route on this date parks you at an airport overnight.");
+        Apply(req.ReducedWalking, "reducedWalking",
+            i => i.WalkingMinutes <= 30,
+            "No route reaches this destination with 30 minutes of walking or less.");
+
+        return (result, relaxed);
     }
 }

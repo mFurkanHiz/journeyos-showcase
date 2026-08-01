@@ -11,11 +11,15 @@ export interface ItinerarySummary {
   comfortScore: number; carbonKgEstimate: number; warningCount: number;
   score: Score | null;
 }
+/** A preference the engine could not honour for this route. A non-empty list means
+ *  the results knowingly violate part of the search, so the UI has to say so. */
+export interface RelaxedPreference { preference: string; reason: string }
 export interface Trip {
   id: string; origin: string; destination: string; departureDate: string;
   travellers: number; currency: string;
   profiles: Record<string, string>;
   itineraries: ItinerarySummary[];
+  relaxedPreferences: RelaxedPreference[];
 }
 export interface Segment {
   mode: string; from: string; fromName: string; to: string; toName: string;

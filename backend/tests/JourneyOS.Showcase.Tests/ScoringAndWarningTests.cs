@@ -113,7 +113,7 @@ public class WarningEngineTests
     [Fact]
     public async Task Canonical_Route_Raises_Visa_Health_And_Passport_Notes_As_Demo_Data()
     {
-        var candidates = await TestWorld.Composer().ComposeAsync(TestWorld.CanonicalRequest());
+        var candidates = (await TestWorld.Composer().ComposeAsync(TestWorld.CanonicalRequest())).Candidates;
         var itinerary = candidates[0];
         await Engine().ApplyAsync(itinerary, "TR");
         Assert.Contains(itinerary.Warnings, w => w.Code == "visa_pe");

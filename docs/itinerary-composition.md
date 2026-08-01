@@ -17,13 +17,20 @@ Beykoz to Machu Picchu (and any pair the mock world can serve):
    overnight flavour (hotel vs airport wait), capped and deduped.
 6. **Per-candidate build**: sequencing with real buffers — check-in/security
    checkpoint (120 min intl / 75 min domestic, less on connections), passport control
-   after border flights, baggage re-check on separate tickets, connection waits, a
-   **gate-town hotel night** timed so the final shuttle/walk arrives before the 07:00
-   entry slot, then the destination activity.
+   after border flights, baggage re-check on separate tickets, connection waits, and a
+   **gate-town night** when the gate is already shut for the day. Entry is then the
+   FIRST feasible slot inside opening hours (06:00–14:00 local), not a fixed morning
+   time — which is exactly what makes a faster journey score a shorter door-to-door
+   duration instead of every candidate collapsing onto the same entry.
 7. **Fail-soft**: any provider exception kills only the candidate (or gateway branch)
    being built. One test drives this with an access provider that throws for SAW.
-8. **Hard preferences**: max transfers / avoid overnight layovers / reduced walking
-   filter the set but degrade gracefully (never to zero candidates).
+8. **Preferences**: max transfers / avoid overnight layovers / reduced walking filter
+   the set, but never down to zero — a trip that cannot be planned is worse than one
+   that misses a preference. Anything that had to be given up is returned as a
+   `RelaxedPreference` and rendered by the UI, because silently handing back results
+   that violate a ticked checkbox is the failure mode this design exists to prevent.
+   Two tests cover it: an impossible cap is relaxed *and* reported, and a satisfiable
+   search reports nothing.
 
 Totals per candidate: converted price (travellers x fares; hotel rooms per 2 people),
 door-to-gate duration, transfers, walking/waiting minutes, overnight airport waits,

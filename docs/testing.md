@@ -1,6 +1,6 @@
 # Testing
 
-30 tests in `backend/tests/JourneyOS.Showcase.Tests`, three layers:
+32 tests in `backend/tests/JourneyOS.Showcase.Tests`, three layers:
 
 ## Unit
 - **Haversine** — known great-circle distances (IST-MAD, LIM-CUZ, zero).

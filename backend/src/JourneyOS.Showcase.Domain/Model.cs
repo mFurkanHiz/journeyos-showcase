@@ -161,4 +161,15 @@ public sealed class Trip
     /// <summary>Which itinerary each profile chose. One itinerary may win several
     /// profiles when it dominates the candidate set — honest, not a bug.</summary>
     public required IReadOnlyDictionary<OptimizationProfile, Guid> ProfilePicks { get; init; }
+
+    /// <summary>Preferences the traveller asked for that no candidate could satisfy.
+    /// Empty on a normal search; non-empty means these results knowingly violate part
+    /// of the request, and every consumer is expected to say so.</summary>
+    public IReadOnlyList<RelaxedPreference> RelaxedPreferences { get; init; } = [];
 }
+
+/// <summary>A preference the traveller asked for that NO candidate could satisfy.
+/// The composer relaxes it rather than returning nothing — but it records it, because
+/// quietly returning results that violate a ticked checkbox is the kind of dishonesty
+/// this codebase exists to avoid.</summary>
+public sealed record RelaxedPreference(string Preference, string Reason);

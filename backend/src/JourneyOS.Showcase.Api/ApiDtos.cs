@@ -39,11 +39,16 @@ public sealed record ItineraryDetailDto(
     IReadOnlyList<WarningDto> Warnings,
     IReadOnlyList<string> RequiredDocuments);
 
+public sealed record RelaxedPreferenceDto(string Preference, string Reason);
+
 public sealed record TripDto(
     Guid Id, string Origin, string Destination, DateOnly DepartureDate, DateOnly? ReturnDate,
     int Travellers, string Currency, DateTime CreatedAtUtc,
     IReadOnlyDictionary<string, Guid> Profiles,
-    IReadOnlyList<ItinerarySummaryDto> Itineraries);
+    IReadOnlyList<ItinerarySummaryDto> Itineraries,
+    /// <summary>Empty on a normal search. Non-empty means the engine could not honour
+    /// part of the request and returned the closest thing instead — clients MUST show it.</summary>
+    IReadOnlyList<RelaxedPreferenceDto> RelaxedPreferences);
 
 public sealed record ComparisonRowDto(string Metric, IReadOnlyDictionary<string, string> ByProfile);
 
@@ -53,7 +58,8 @@ public static class ApiMapping
         trip.Id, trip.OriginQuery, trip.DestinationQuery, trip.DepartureDate, trip.ReturnDate,
         trip.Travellers, trip.Currency, trip.CreatedAtUtc,
         trip.ProfilePicks.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
-        trip.Itineraries.Select(i => i.ToSummaryDto()).ToList());
+        trip.Itineraries.Select(i => i.ToSummaryDto()).ToList(),
+        trip.RelaxedPreferences.Select(r => new RelaxedPreferenceDto(r.Preference, r.Reason)).ToList());
 
     public static ItinerarySummaryDto ToSummaryDto(this Itinerary i) => new(
         i.Id, i.Label, i.TotalPrice.Amount, i.TotalPrice.Currency,

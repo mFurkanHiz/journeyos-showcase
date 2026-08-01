@@ -20,8 +20,8 @@ public sealed class TripService
 
     public async Task<Trip> SearchAsync(TripSearchRequest request, CancellationToken ct = default)
     {
-        var candidates = await _composer.ComposeAsync(request, ct);
-        var winners = _scoring.PickPerProfile(candidates);
+        var composition = await _composer.ComposeAsync(request, ct);
+        var winners = _scoring.PickPerProfile(composition.Candidates);
 
         // The trip stores each profile's winner (deduped — one itinerary can win
         // several profiles when it dominates; the API exposes profile → id mapping).
@@ -39,6 +39,9 @@ public sealed class TripService
             Currency = request.Currency,
             Itineraries = distinct,
             ProfilePicks = winners.ToDictionary(kv => kv.Key, kv => kv.Value.Id),
+            // Carried onto the trip so the API — and therefore the UI — has to confront
+            // the fact that these results do not fully match what was asked for.
+            RelaxedPreferences = composition.Relaxed,
         };
         _store.Save(trip);
         return trip;
