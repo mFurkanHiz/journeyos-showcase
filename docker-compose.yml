@@ -1,0 +1,7 @@
+# Local demo convenience: API on 5100. The frontend runs with `npm run dev`
+# (Vite proxies /api to the container). No secrets, no external services.
+services:
+  api:
+    build: .
+    ports:
+      - "5100:5100"

@@ -1,0 +1,20 @@
+# Private working notes from the extraction process — NEVER published.
+/_audit/
+
+# .NET
+bin/
+obj/
+*.user
+TestResults/
+coverage/
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Local env & editors
+.env
+.env.local
+.vs/
+.idea/

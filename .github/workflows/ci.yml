@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore
+        run: dotnet restore JourneyOS.Showcase.slnx
+      - name: Build
+        run: dotnet build JourneyOS.Showcase.slnx --no-restore --configuration Release
+      - name: Test with coverage
+        run: >
+          dotnet test JourneyOS.Showcase.slnx --no-build --configuration Release
+          --collect:"XPlat Code Coverage" --results-directory ./coverage
+      - name: Coverage summary
+        run: |
+          FILE=$(find ./coverage -name 'coverage.cobertura.xml' | head -1)
+          echo "Coverage report: $FILE"
+          grep -o 'line-rate="[0-9.]*"' "$FILE" | head -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: ./coverage
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate API image builds
+        run: docker build -f Dockerfile -t journeyos-showcase-api .

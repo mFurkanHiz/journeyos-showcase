@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/backend/" />
+  <Folder Name="/backend/src/">
+    <Project Path="backend/src/JourneyOS.Showcase.Api/JourneyOS.Showcase.Api.csproj" />
+    <Project Path="backend/src/JourneyOS.Showcase.Application/JourneyOS.Showcase.Application.csproj" />
+    <Project Path="backend/src/JourneyOS.Showcase.Domain/JourneyOS.Showcase.Domain.csproj" />
+    <Project Path="backend/src/JourneyOS.Showcase.Infrastructure/JourneyOS.Showcase.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/backend/tests/">
+    <Project Path="backend/tests/JourneyOS.Showcase.Tests/JourneyOS.Showcase.Tests.csproj" />
+  </Folder>
+</Solution>
