@@ -4,7 +4,7 @@
 walks, rides, flights, trains, waits and nights, composed and scored end to end.**
 
 ![CI](https://github.com/mFurkanHiz/journeyos-showcase/actions/workflows/ci.yml/badge.svg)
-&nbsp;·&nbsp; .NET 10 · React + Vite · 29 tests (unit + integration + e2e)
+&nbsp;·&nbsp; .NET 10 · React + Vite · 30 tests (unit + integration + e2e)
 
 
 > **Everything in this demo is deterministic mock data** — prices, schedules and entry
@@ -46,7 +46,7 @@ copy the private system.
 | Live free-data adapters (geocoding, roads, weather, advisories, airports, aircraft, FX) | 🔒 | ✅ |
 | Config-gated paid seams (flights / hotels / fares / flight-status) | 🔒 | ✅ |
 | Persistence (EF Core, migrations), auth, admin, i18n-as-data, payments/loyalty | 🔒 | ✅ |
-| Test suite | 29 | 355 |
+| Test suite | 30 | 355 |
 
 ## Architecture
 
@@ -144,7 +144,8 @@ Full script: [`docs/demo.md`](docs/demo.md).
 Eight metrics (price, duration, transfers, risk, waiting, overnight, comfort, walking)
 are min-max normalized across the candidates, then weighted per profile (each profile's
 weights sum to 1). Lowest weighted total wins and carries its breakdown — the real
-output for the canonical demo:
+output for the two-traveller request shown above (the screenshots run one traveller, so
+the savings there are half these):
 
 ```
 Balanced   price 0.39×0.25=0.097 · duration 0.00×0.25=0.000 · risk 0.27×0.12=0.032
@@ -185,7 +186,7 @@ overnight airport wait, transit and health notes), every row flagged as demo dat
 
 ## Tests & CI
 
-29 tests: unit (Haversine, normalization, composer continuity/determinism/fail-soft,
+30 tests: unit (Haversine, normalization, composer continuity/determinism/fail-soft,
 timezones, scoring, warnings), WebApplicationFactory integration (all endpoints, error
 codes), and an end-to-end canonical-demo test. CI (`.github/workflows/ci.yml`) runs
 backend build + tests + coverage, frontend lint + build, and a Docker image build.

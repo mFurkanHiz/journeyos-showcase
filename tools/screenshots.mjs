@@ -46,7 +46,7 @@ await shot("01-profiles", "search + scored profile cards + score breakdown", asy
 // 2 — the composed timeline with buffers, dual clocks and tz/date badges
 await shot("02-timeline", "timeline with dual local clocks and tz/date badges", async () => {
   await page.locator("ol.timeline").scrollIntoViewIfNeeded();
-  await page.evaluate(() => window.scrollBy(0, -120));
+  await page.evaluate(() => window.scrollBy(0, -200));   // keep the section heading in frame
 });
 
 // 3 — warning engine output (every row demo-flagged)

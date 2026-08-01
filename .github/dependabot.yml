@@ -21,6 +21,12 @@ updates:
     groups:
       frontend:
         patterns: ["*"]
+    ignore:
+      # typescript-eslint 8 declares `typescript: >=4.8.4 <6.1.0`. A TS 7 bump cannot
+      # install, so proposing it only produces a PR whose CI can never go green.
+      # Drop this entry once typescript-eslint widens the peer range.
+      - dependency-name: typescript
+        versions: [">=6.1.0"]
 
   - package-ecosystem: github-actions
     directory: /

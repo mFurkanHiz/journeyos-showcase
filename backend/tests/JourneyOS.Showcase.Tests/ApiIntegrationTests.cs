@@ -81,6 +81,33 @@ public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async Task Comparison_Numbers_Use_The_Invariant_Culture_Not_The_Servers()
+    {
+        // The API contract is English; a tr-TR server must not ship "0,41" to every client.
+        var previous = System.Globalization.CultureInfo.CurrentCulture;
+        System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("tr-TR");
+        try
+        {
+            var trip = await SearchAsync();
+            var tripId = trip.GetProperty("id").GetGuid();
+            var rows = await _client.GetFromJsonAsync<JsonElement>($"/api/trips/{tripId}/comparison", Json);
+
+            var decimals = rows.EnumerateArray()
+                .Where(r => r.GetProperty("metric").GetString()!.Contains("(0-1)"))
+                .SelectMany(r => r.GetProperty("byProfile").EnumerateObject().Select(p => p.Value.GetString()!))
+                .ToList();
+
+            Assert.NotEmpty(decimals);
+            Assert.All(decimals, v => Assert.DoesNotContain(",", v));
+            Assert.All(decimals, v => Assert.Contains(".", v));
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = previous;
+        }
+    }
+
+    [Fact]
     public async Task Bad_Input_Is_400_Unknown_Trip_Is_404_No_Route_Is_422()
     {
         var bad = await _client.PostAsJsonAsync("/api/trips/search",

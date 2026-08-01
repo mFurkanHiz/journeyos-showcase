@@ -82,19 +82,23 @@ public static class ApiMapping
         var byProfile = trip.ProfilePicks.ToDictionary(
             kv => kv.Key.ToString(),
             kv => trip.Itineraries.First(i => i.Id == kv.Value));
+        // These are display strings crossing an English API contract, so they are formatted
+        // with the invariant culture — never the server's. On a tr-TR machine the ambient
+        // culture renders 0.41 as "0,41", which then ships to every client.
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
         string H(int minutes) => $"{minutes / 60}h {minutes % 60:00}m";
         var rows = new List<(string Metric, Func<Itinerary, string> Get)>
         {
-            ("Total price", i => $"{i.TotalPrice.Amount:0} {i.TotalPrice.Currency}"),
+            ("Total price", i => $"{i.TotalPrice.Amount.ToString("0", inv)} {i.TotalPrice.Currency}"),
             ("Door-to-gate duration", i => H(i.TotalDurationMinutes)),
-            ("Transfers", i => i.TransferCount.ToString()),
+            ("Transfers", i => i.TransferCount.ToString(inv)),
             ("Walking", i => H(i.WalkingMinutes)),
             ("Waiting", i => H(i.WaitingMinutes)),
-            ("Overnight airport waits", i => i.OvernightWaits.ToString()),
-            ("Connection risk (0-1)", i => i.RiskScore.ToString("0.00")),
-            ("Comfort (0-1)", i => i.ComfortScore.ToString("0.00")),
-            ("CO₂ estimate (kg)", i => i.CarbonKgEstimate.ToString("0")),
-            ("Warnings", i => i.Warnings.Count.ToString()),
+            ("Overnight airport waits", i => i.OvernightWaits.ToString(inv)),
+            ("Connection risk (0-1)", i => i.RiskScore.ToString("0.00", inv)),
+            ("Comfort (0-1)", i => i.ComfortScore.ToString("0.00", inv)),
+            ("CO₂ estimate (kg)", i => i.CarbonKgEstimate.ToString("0", inv)),
+            ("Warnings", i => i.Warnings.Count.ToString(inv)),
         };
         return rows.Select(r => new ComparisonRowDto(
             r.Metric, byProfile.ToDictionary(kv => kv.Key, kv => r.Get(kv.Value)))).ToList();
