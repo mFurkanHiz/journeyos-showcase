@@ -5,11 +5,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11" />
     <!-- Pinned above the 2.0.0 that Microsoft.AspNetCore.OpenApi pulls in transitively:
          that version carries GHSA-v5pm-xwqc-g5wc. A build with zero vulnerability
          warnings is part of the deliverable, so the transitive pin is explicit. -->
-    <PackageReference Include="Microsoft.OpenApi" Version="2.11.0" />
+    <PackageReference Include="Microsoft.OpenApi" Version="2.12.2" />
   </ItemGroup>
 
   <PropertyGroup>
